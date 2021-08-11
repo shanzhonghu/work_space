@@ -1,0 +1,352 @@
+package com.example.demo.controller;
+
+import com.example.demo.entity.City;
+import com.example.demo.entity.TClient;
+import com.example.demo.entity.TClientLinkman;
+import com.example.demo.entity.ts.Hint;
+import com.example.demo.mapper.CityDao;
+import com.example.demo.mapper.TClientDao;
+import com.example.demo.mapper.TClientLinkmanDao;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.web.bind.annotation.*;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+@RestController
+@CrossOrigin
+@MapperScan("com.example.demo.mapper")
+@Api(tags = "用户测试")
+public class TPreGrpController {
+
+    @Autowired
+    private TClientDao tClientDao;
+
+    @Autowired
+    private TClientLinkmanDao tClientLinkmanDao;
+
+    @Autowired
+    private CityDao cityDao;
+
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+
+    @RequestMapping("deleteredis")
+    public void deleteredis(){
+        redisTemplate.delete("tclent1");
+        String key="Zhuntclent";
+        String key1="tclent";
+        redisTemplate.delete(key);
+        redisTemplate.delete(key1);
+
+    }
+
+    @RequestMapping("selectredis")
+    public void selectredis(){
+        Set<String> keys = redisTemplate.keys("*");
+        for (String key : keys) {
+            System.out.println(key);
+        }
+    }
+
+
+
+    @GetMapping("getCity")
+    @ApiOperation(value = "根据id查询城市")
+    public List<City> getCity(int pid){
+        List<City> cities = cityDao.selectCity(pid);
+        return cities;
+    }
+
+
+    /**
+     * 查询所有本地客户
+     * @return
+     */
+    @GetMapping("selectClient")
+    public List<TClient> selectTPreGrps(TClient tClient){
+        List<TClient> tClients;
+        if (tClient.getCname() != null && tClient.getCname()!=""){
+
+            String key = "tclent"+tClient.getCname();
+            ValueOperations <String,List<TClient>> operations = redisTemplate.opsForValue();
+            Boolean aBoolean = redisTemplate.hasKey(key);
+            if (aBoolean){
+                System.out.println("从缓存中查看");
+                List<TClient> tclent = operations.get("tclent"+tClient.getCname());
+                return tclent;
+            }else{
+                System.out.println("从数据库中查看");
+                tClients=tClientDao.selectTClientMohu(tClient);
+                // 写入缓存
+                operations.set(key, tClients, 5, TimeUnit.HOURS);
+                return tClients;
+            }
+
+        }else{
+            if (tClient.getCname()!="" && tClient.getCname() != null ){
+                String key = "tclent"+tClient.getCname();
+                ValueOperations <String,List<TClient>> operations = redisTemplate.opsForValue();
+                Boolean aBoolean = redisTemplate.hasKey(key);
+                if (aBoolean){
+                    System.out.println("从缓存中查看");
+                    List<TClient> tclent = operations.get("tclent"+tClient.getCname());
+                    return tclent;
+                }else{
+                    System.out.println("从数据库中查看");
+                    tClients=tClientDao.selectTClientMohu(tClient);
+                    // 写入缓存
+                    operations.set(key, tClients, 5, TimeUnit.HOURS);
+                    return tClients;
+                }
+
+            }else{
+                String key = "tclent";
+                ValueOperations <String,List<TClient>> operations = redisTemplate.opsForValue();
+                Boolean aBoolean = redisTemplate.hasKey(key);
+                if (aBoolean){
+                    System.out.println("从缓存中查看");
+                    List<TClient> tclent = operations.get("tclent");
+                    return tclent;
+                }else{
+                    System.out.println("从数据库中查看");
+                    tClients = tClientDao.selectTClient();
+                    // 写入缓存
+                    operations.set(key, tClients, 5, TimeUnit.HOURS);
+                    return tClients;
+                }
+            }
+        }
+
+
+    }
+    /**
+     * 查询所有准客户
+     * @return
+     */
+    @GetMapping("selectZhunClient")
+    public List<TClient> selectZhunClient(TClient tClient){
+
+        List<TClient> tClients ;
+        if (tClient.getCname() != null && tClient.getCname()!=""){
+
+            String key = "Zhuntclent"+tClient.getCname();
+            ValueOperations <String,List<TClient>> operations = redisTemplate.opsForValue();
+            Boolean aBoolean = redisTemplate.hasKey(key);
+            if (aBoolean){
+                System.out.println("从缓存中查看");
+                List<TClient> tclent = operations.get("Zhuntclent"+tClient.getCname());
+                return tclent;
+            }else{
+                System.out.println("从数据库中查看");
+                tClients=tClientDao.selectZhunTClientMohu(tClient);
+                // 写入缓存
+                operations.set(key, tClients, 5, TimeUnit.HOURS);
+                return tClients;
+            }
+
+
+        }else{
+            if (tClient.getCname()!="" && tClient.getCname() != null){
+
+                String key = "Zhuntclent"+tClient.getCname();
+                ValueOperations <String,List<TClient>> operations = redisTemplate.opsForValue();
+                Boolean aBoolean = redisTemplate.hasKey(key);
+                if (aBoolean){
+                    System.out.println("从缓存中查看");
+                    List<TClient> tclent = operations.get("Zhuntclent"+tClient.getCname());
+                    return tclent;
+                }else{
+                    System.out.println("从数据库中查看");
+                    tClients=tClientDao.selectZhunTClientMohu(tClient);
+                    // 写入缓存
+                    operations.set(key, tClients, 5, TimeUnit.HOURS);
+                    return tClients;
+                }
+
+
+            }else{
+                String key = "Zhuntclent";
+                ValueOperations <String,List<TClient>> operations = redisTemplate.opsForValue();
+                Boolean aBoolean = redisTemplate.hasKey(key);
+                if (aBoolean){
+                    System.out.println("从缓存中查看");
+                    List<TClient> tclent = operations.get("Zhuntclent");
+                    return tclent;
+                }else{
+                    System.out.println("从数据库中查看");
+                    tClients = tClientDao.selectZhunTClient();
+                    // 写入缓存
+                    operations.set(key, tClients, 5, TimeUnit.HOURS);
+                    return tClients;
+                }
+            }
+
+        }
+
+
+
+    }
+    /**
+     * 添加所有
+     * @return
+     */
+    @PostMapping("addClient")
+    public Hint addClient(TClient tClient){
+
+        Hint hint = new Hint();
+        Date date = new Date();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMddHHmmss");
+        String dateString = simpleDateFormat.format(date);
+        tClient.setCid(Integer.parseInt(dateString));
+        tClient.setStarLevel(2);
+        int sum=0;
+
+        ValueOperations operations = redisTemplate.opsForValue();
+
+        try {
+            tClientDao.insertTClient(tClient);
+            List<TClientLinkman> tclientLinkmens = tClient.getTclientLinkmens();
+            for (TClientLinkman tClientLinkman : tclientLinkmens) {
+                tClientLinkman.setCid(Integer.parseInt(dateString));
+                tClientLinkman.setId(11);
+                sum++;
+                if(sum == 1 ){
+                    tClientLinkman.setFlag(1);
+                }
+                tClientLinkmanDao.insertlinkman(tClientLinkman);
+            }
+            hint.setFlag(true);
+            hint.setMsg("添加成功！");
+        } catch (Exception e) {
+            hint.setFlag(false);
+            hint.setMsg("添加失败！");
+            e.printStackTrace();
+        }
+        if (hint.getFlag()){
+            redisTemplate.delete("Zhuntclent");
+            redisTemplate.delete("tclent");
+            System.out.println("存入redis缓存中");
+            selectTPreGrps(new TClient());
+            selectZhunClient(new TClient());
+        }
+        return hint;
+    }
+
+    /**
+     * 查询单个数据
+     * @return
+     */
+    @GetMapping("selectClientById")
+    public TClient selectClientById(int cid){
+        TClient tClient1 = null;
+        String key="Zhuntclent";
+        String key1="tclent";
+        ValueOperations<String, List<TClient>> operations = redisTemplate.opsForValue();
+
+        //判断redis中是否有键为key的缓存
+        boolean hasKey = redisTemplate.hasKey(key);
+        boolean hasKey1 = redisTemplate.hasKey(key1);
+
+        if (hasKey || hasKey1) {
+            if (hasKey){
+                List<TClient> tClients = operations.get(key);
+                for (TClient tClient : tClients) {
+                    if (tClient.getCid() == cid){
+                        tClient1=tClient;
+                    }
+                }
+            }
+            if (hasKey1){
+                List<TClient> tClients1 = operations.get(key1);
+                for (TClient tClient : tClients1) {
+                    if (tClient.getCid() == cid){
+                        tClient1=tClient;
+                    }
+                }
+            }
+            System.out.println("从缓存中获得数据");
+            return tClient1;
+        } else {
+            System.out.println("从数据库中查看");
+            TClient tClient = tClientDao.selectTClientById(cid);
+            return tClient;
+        }
+    }
+    /**
+     * 修改
+     * @return
+     */
+
+    @PutMapping("updateClient")
+    public Hint updateClient(TClient tClient){
+        Hint hint = new Hint();
+        try {
+            tClientDao.updatetClient(tClient);
+            tClientLinkmanDao.deleteTClientLinkmanByCid(tClient.getCid());
+            List<TClientLinkman> tclientLinkmens = tClient.getTclientLinkmens();
+            for (TClientLinkman tClientLinkman : tclientLinkmens) {
+                    tClientLinkman.setCid(tClient.getCid());
+                    tClientLinkman.setId(123);
+                    tClientLinkmanDao.insertlinkman(tClientLinkman);
+            }
+            hint.setFlag(true);
+            hint.setMsg("修改成功！");
+        } catch (Exception e) {
+            hint.setFlag(false);
+            hint.setMsg("修改失败！");
+            e.printStackTrace();
+        }
+        if (hint.getFlag()){
+            redisTemplate.delete("Zhuntclent");
+            redisTemplate.delete("tclent");
+            System.out.println("存入redis缓存中");
+            selectTPreGrps(new TClient());
+            selectZhunClient(new TClient());
+        }
+
+        return hint;
+    }
+
+    /**
+     * 删除客户及联系人
+     */
+
+    @DeleteMapping("deleteClient")
+    public Hint deleteClient(int cid){
+        Hint hint = new Hint();
+        try {
+            tClientLinkmanDao.deleteTClientLinkmanByCid(cid);
+            tClientDao.deleteById(cid);
+            hint.setFlag(true);
+            hint.setMsg("删除成功！");
+        } catch (Exception e) {
+            hint.setFlag(false);
+            hint.setMsg("删除失败！");
+            e.printStackTrace();
+        }
+        if (hint.getFlag()){
+            redisTemplate.delete("Zhuntclent");
+            redisTemplate.delete("tclent");
+            System.out.println("存入redis缓存中");
+            selectTPreGrps(new TClient());
+            selectZhunClient(new TClient());
+        }
+        return hint;
+    }
+
+
+
+
+
+}
